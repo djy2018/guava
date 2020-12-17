@@ -300,14 +300,18 @@ public abstract class RateLimiter {
    */
   @CanIgnoreReturnValue
   public double acquire(int permits) {
+    // 预约，如果当前不能直接获取到 permits，需要等待。返回值：代表等待花费时间，单位：毫秒，非负
     long microsToWait = reserve(permits);
+    // sleep
     stopwatch.sleepMicrosUninterruptibly(microsToWait);
+    // 返回 sleep 时长
     return 1.0 * microsToWait / SECONDS.toMicros(1L);
   }
 
   /**
    * Reserves the given number of permits from this {@code RateLimiter} for future use, returning
    * the number of microseconds until the reservation can be consumed.
+   *
    *
    * @return time in microseconds to wait until the resource can be acquired, never negative
    */
@@ -431,7 +435,9 @@ public abstract class RateLimiter {
    * @return the required wait time, never negative
    */
   final long reserveAndGetWaitLength(int permits, long nowMicros) {
+    // 返回 nextFreeTicketMicros
     long momentAvailable = reserveEarliestAvailable(permits, nowMicros);
+    // 计算等待时间
     return max(momentAvailable - nowMicros, 0);
   }
 
